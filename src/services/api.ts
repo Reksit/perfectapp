@@ -606,4 +606,65 @@ export const eventsAPI = {
   },
 };
 
+// Circular API
+export const circularAPI = {
+  // Create a new circular
+  createCircular: async (data: {
+    title: string;
+    body: string;
+    recipientTypes: string[];
+  }) => {
+    const response = await api.post('/circulars', data);
+    return response.data;
+  },
+
+  // Get circulars received by current user
+  getMyReceivedCirculars: async () => {
+    const response = await api.get('/circulars/my-received');
+    return response.data;
+  },
+
+  // Get circulars sent by current user
+  getMySentCirculars: async () => {
+    const response = await api.get('/circulars/my-sent');
+    return response.data;
+  },
+
+  // Get a specific circular by ID
+  getCircular: async (id: string) => {
+    const response = await api.get(`/circulars/${id}`);
+    return response.data;
+  },
+
+  // Mark circular as read
+  markAsRead: async (id: string) => {
+    const response = await api.post(`/circulars/${id}/read`);
+    return response.data;
+  },
+
+  // Archive a circular
+  archiveCircular: async (id: string) => {
+    const response = await api.post(`/circulars/${id}/archive`);
+    return response.data;
+  },
+
+  // Get unread circular count
+  getUnreadCount: async () => {
+    const response = await api.get('/circulars/unread-count');
+    return response.data;
+  },
+
+  // Get circular statistics
+  getStats: async () => {
+    const response = await api.get('/circulars/stats');
+    return response.data;
+  },
+
+  // Get all circulars (for management)
+  getAllCirculars: async () => {
+    const response = await api.get('/circulars/all');
+    return response.data;
+  },
+};
+
 export default api;

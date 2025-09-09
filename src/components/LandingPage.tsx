@@ -1,16 +1,68 @@
-import React from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
+import { useToast } from "../contexts/ToastContext";
+import { Eye, EyeOff, BookOpen } from "lucide-react";
 import CardSwap, { Card } from "./common/CardSwap";
 
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
+  const { login } = useAuth();
+  const { showToast } = useToast();
+
+  // Login form state
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleSignUpClick = () => {
     navigate("/register");
   };
 
-  const handleLoginClick = () => {
-    navigate("/login");
+  const handleLoginSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      await login(email, password);
+      showToast('Login successful!', 'success');
+      
+      // Wait a bit longer to ensure state is properly updated
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      console.log('Login successful, user role:', user.role);
+      
+      // Navigate based on role with proper error handling
+      switch (user.role) {
+        case 'STUDENT':
+          console.log('Redirecting to student dashboard');
+          navigate('/student');
+          break;
+        case 'PROFESSOR':
+          console.log('Redirecting to professor dashboard');
+          navigate('/professor');
+          break;
+        case 'MANAGEMENT':
+          console.log('Redirecting to management dashboard');
+          navigate('/management');
+          break;
+        case 'ALUMNI':
+          console.log('Redirecting to alumni dashboard');
+          navigate('/alumni');
+          break;
+        default:
+          console.log('Unknown role:', user.role, 'redirecting to login');
+          showToast('Invalid user role. Please contact support.', 'error');
+          navigate('/login');
+      }
+    } catch (error: any) {
+      console.error('Login error:', error);
+      showToast(error.message || 'Login failed', 'error');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -20,12 +72,6 @@ const LandingPage: React.FC = () => {
         <div className="flex justify-between items-center">
           <div className="text-2xl font-bold text-emerald-700">EduConnect</div>
           <div className="flex gap-4">
-            <button
-              onClick={handleLoginClick}
-              className="px-6 py-2 text-emerald-700 hover:text-emerald-800 font-medium transition-colors duration-200"
-            >
-              Sign In
-            </button>
             <button
               onClick={handleSignUpClick}
               className="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl"
@@ -38,38 +84,94 @@ const LandingPage: React.FC = () => {
 
       {/* Main Content */}
       <div className="flex items-center justify-center min-h-screen">
-        <div className="flex flex-col lg:flex-row items-center justify-between w-full max-w-7xl mx-auto px-6">
-          {/* Left Side - Content */}
-          <div className="flex-1 max-w-2xl mb-12 lg:mb-0">
-            <h1 className="text-5xl lg:text-7xl font-bold text-emerald-800 mb-6 leading-tight">
-              Connect, Learn,
-              <br />
-              <span className="text-green-600">Grow Together</span>
-            </h1>
-            <p className="text-xl text-emerald-700 mb-8 leading-relaxed">
-              Join our educational community where students, professors, alumni,
-              and management collaborate to create meaningful learning
-              experiences and build lasting connections.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <button
-                onClick={handleSignUpClick}
-                className="px-8 py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold text-lg transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl"
-              >
-                Get Started Today
-              </button>
-              <button
-                onClick={handleLoginClick}
-                className="px-8 py-4 border-2 border-emerald-600 text-emerald-700 hover:bg-emerald-50 rounded-xl font-semibold text-lg transition-all duration-200"
-              >
-                Already a Member?
-              </button>
+        <div className="flex flex-col lg:flex-row items-center justify-between w-full max-w-7xl mx-auto px-6" style={{ transform: "translateX(80px)" }}>
+          {/* Left Side - Login Form */}
+          <div className="flex-1 max-w-md mb-12 lg:mb-0">
+            <div className="bg-white rounded-2xl shadow-xl p-8 border border-emerald-100">
+              <div className="text-center mb-8">
+                <div className="mx-auto h-16 w-16 bg-emerald-600 rounded-2xl flex items-center justify-center mb-6">
+                  <BookOpen className="h-8 w-8 text-white" />
+                </div>
+                <h2 className="text-3xl font-bold text-emerald-800">
+                  Welcome Back
+                </h2>
+                <p className="mt-2 text-emerald-600">
+                  Sign in to your EduConnect portal
+                </p>
+              </div>
+
+              <form className="space-y-6" onSubmit={handleLoginSubmit}>
+                <div className="space-y-4">
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-medium text-emerald-700 mb-1">
+                      Email Address
+                    </label>
+                    <input
+                      id="email"
+                      name="email"
+                      type="email"
+                      required
+                      className="appearance-none relative block w-full px-3 py-3 border border-emerald-300 placeholder-emerald-400 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                      placeholder="Enter your college email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="password" className="block text-sm font-medium text-emerald-700 mb-1">
+                      Password
+                    </label>
+                    <div className="relative">
+                      <input
+                        id="password"
+                        name="password"
+                        type={showPassword ? 'text' : 'password'}
+                        required
+                        className="appearance-none relative block w-full px-3 py-3 pr-10 border border-emerald-300 placeholder-emerald-400 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                        placeholder="Enter your password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                      />
+                      <button
+                        type="button"
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-5 w-5 text-emerald-400" />
+                        ) : (
+                          <Eye className="h-5 w-5 text-emerald-400" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-xl text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {loading ? 'Signing in...' : 'Sign In'}
+                </button>
+
+                <div className="text-center">
+                  <span className="text-emerald-600">Don't have an account? </span>
+                  <Link
+                    to="/register"
+                    className="font-medium text-emerald-700 hover:text-emerald-800 transition-colors"
+                  >
+                    Sign up
+                  </Link>
+                </div>
+              </form>
             </div>
           </div>
 
           {/* Right Side - Card Animation */}
           <div className="flex-1 flex justify-center items-center">
-            <div style={{ height: "600px", position: "relative" }}>
+            <div style={{ height: "600px", position: "relative", transform: "translate(40px, -120px)" }}>
               <CardSwap
                 cardDistance={60}
                 verticalDistance={70}
