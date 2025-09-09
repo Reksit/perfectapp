@@ -108,7 +108,7 @@ const AlumniDirectoryUnified: React.FC = React.memo(() => {
           "AlumniDirectoryUnified: Primary API failed, trying fallback"
         );
         // Fallback to the old API
-        response = await axios.get("http://localhost:8080/api/users/alumni", {
+        response = await axios.get("https://backend-7y12.onrender.com/api/users/alumni", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -137,7 +137,7 @@ const AlumniDirectoryUnified: React.FC = React.memo(() => {
           try {
             // Try to get enhanced profile data from alumni_profiles collection
             const profileResponse = await axios.get(
-              `http://localhost:8080/api/alumni-profiles/complete-profile/${alum.id}`,
+              `https://backend-7y12.onrender.com/api/alumni-profiles/complete-profile/${alum.id}`,
               {
                 headers: { Authorization: `Bearer ${token}` },
               }

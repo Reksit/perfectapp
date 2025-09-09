@@ -27,7 +27,7 @@ import com.stjoseph.assessmentsystem.service.AlumniEventService;
 
 @RestController
 @RequestMapping("/api/alumni-events")
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = "*")
 public class AlumniEventController {
 
     @Autowired

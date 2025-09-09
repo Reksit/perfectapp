@@ -21,7 +21,7 @@ import com.stjoseph.assessmentsystem.service.UserService;
 
 @RestController
 @RequestMapping("/students")
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = "*")
 public class StudentProfileController {
 
     @Autowired

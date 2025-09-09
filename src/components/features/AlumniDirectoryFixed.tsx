@@ -81,7 +81,7 @@ const AlumniDirectoryFixed: React.FC = React.memo(() => {
         }
       } catch (error) {
         console.warn('AlumniDirectoryFixed: Primary API failed, trying fallback');
-        response = await axios.get('http://localhost:8080/api/users/alumni', {
+        response = await axios.get('https://backend-7y12.onrender.com/api/users/alumni', {
           headers: {
             'Authorization': `Bearer ${token}`
           }

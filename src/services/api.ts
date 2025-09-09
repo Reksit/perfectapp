@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:8080/api';
+const API_BASE_URL = 'https://backend-7y12.onrender.com/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -588,7 +588,7 @@ export const eventsAPI = {
       console.error('Events API error:', error);
       // If authenticated API fails, try debug endpoint as fallback
       try {
-        const fallbackResponse = await fetch('http://localhost:8080/api/debug/events');
+        const fallbackResponse = await fetch('https://backend-7y12.onrender.com/api/debug/events');
         if (fallbackResponse.ok) {
           const data = await fallbackResponse.json();
           return data.events || [];
