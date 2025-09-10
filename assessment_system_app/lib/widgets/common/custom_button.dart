@@ -1,62 +1,43 @@
 import 'package:flutter/material.dart';
+import '../../utils/theme.dart';
+
+enum ButtonVariant { primary, secondary, outline, ghost }
 
 class CustomButton extends StatelessWidget {
-  final VoidCallback? onPressed;
   final String text;
+  final VoidCallback? onPressed;
+  final ButtonVariant variant;
   final bool isLoading;
-  final double? width;
-  final double height;
-  final Color? backgroundColor;
-  final Color? textColor;
   final IconData? icon;
-  final EdgeInsetsGeometry? padding;
-  final BorderRadius? borderRadius;
-  final double elevation;
+  final double? width;
+  final double? height;
 
   const CustomButton({
     super.key,
-    required this.onPressed,
     required this.text,
+    this.onPressed,
+    this.variant = ButtonVariant.primary,
     this.isLoading = false,
-    this.width,
-    this.height = 48,
-    this.backgroundColor,
-    this.textColor,
     this.icon,
-    this.padding,
-    this.borderRadius,
-    this.elevation = 2,
+    this.width,
+    this.height,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final effectiveBackgroundColor = backgroundColor ?? theme.colorScheme.primary;
-    final effectiveTextColor = textColor ?? Colors.white;
-
-    return Container(
+    return SizedBox(
       width: width,
-      height: height,
+      height: height ?? 48,
       child: ElevatedButton(
         onPressed: isLoading ? null : onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: effectiveBackgroundColor,
-          foregroundColor: effectiveTextColor,
-          elevation: elevation,
-          padding: padding ?? const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          shape: RoundedRectangleBorder(
-            borderRadius: borderRadius ?? BorderRadius.circular(12),
-          ),
-          disabledBackgroundColor: effectiveBackgroundColor.withOpacity(0.6),
-          disabledForegroundColor: effectiveTextColor.withOpacity(0.6),
-        ),
+        style: _getButtonStyle(),
         child: isLoading
-            ? SizedBox(
+            ? const SizedBox(
                 width: 20,
                 height: 20,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(effectiveTextColor),
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                 ),
               )
             : Row(
@@ -72,12 +53,69 @@ class CustomButton extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: effectiveTextColor,
+                      color: _getTextColor(),
                     ),
                   ),
                 ],
               ),
       ),
     );
+  }
+
+  ButtonStyle _getButtonStyle() {
+    switch (variant) {
+      case ButtonVariant.primary:
+        return ElevatedButton.styleFrom(
+          backgroundColor: AppTheme.primaryGreen,
+          foregroundColor: Colors.white,
+          elevation: 2,
+          shadowColor: AppTheme.primaryGreen.withOpacity(0.3),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        );
+      case ButtonVariant.secondary:
+        return ElevatedButton.styleFrom(
+          backgroundColor: AppTheme.backgroundLight,
+          foregroundColor: AppTheme.textPrimary,
+          elevation: 1,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: const BorderSide(color: AppTheme.borderLight),
+          ),
+        );
+      case ButtonVariant.outline:
+        return ElevatedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          foregroundColor: AppTheme.primaryGreen,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: const BorderSide(color: AppTheme.primaryGreen),
+          ),
+        );
+      case ButtonVariant.ghost:
+        return ElevatedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          foregroundColor: AppTheme.textSecondary,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        );
+    }
+  }
+
+  Color _getTextColor() {
+    switch (variant) {
+      case ButtonVariant.primary:
+        return Colors.white;
+      case ButtonVariant.secondary:
+        return AppTheme.textPrimary;
+      case ButtonVariant.outline:
+        return AppTheme.primaryGreen;
+      case ButtonVariant.ghost:
+        return AppTheme.textSecondary;
+    }
   }
 }

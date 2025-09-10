@@ -1,118 +1,100 @@
 import 'package:flutter/material.dart';
+import '../../utils/theme.dart';
 
 class CustomTextField extends StatelessWidget {
   final TextEditingController controller;
   final String label;
-  final String? hint;
-  final IconData? prefixIcon;
-  final Widget? suffixIcon;
-  final bool obscureText;
+  final String hintText;
+  final bool isPassword;
+  final bool isPasswordVisible;
+  final VoidCallback? onTogglePassword;
   final TextInputType keyboardType;
   final String? Function(String?)? validator;
-  final VoidCallback? onTap;
-  final bool readOnly;
-  final int? maxLines;
-  final int? minLines;
-  final EdgeInsetsGeometry? contentPadding;
-  final BorderRadius? borderRadius;
+  final int maxLines;
+  final bool enabled;
+  final Widget? prefixIcon;
+  final Widget? suffixIcon;
 
   const CustomTextField({
     super.key,
     required this.controller,
     required this.label,
-    this.hint,
-    this.prefixIcon,
-    this.suffixIcon,
-    this.obscureText = false,
+    required this.hintText,
+    this.isPassword = false,
+    this.isPasswordVisible = false,
+    this.onTogglePassword,
     this.keyboardType = TextInputType.text,
     this.validator,
-    this.onTap,
-    this.readOnly = false,
     this.maxLines = 1,
-    this.minLines,
-    this.contentPadding,
-    this.borderRadius,
+    this.enabled = true,
+    this.prefixIcon,
+    this.suffixIcon,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: theme.textTheme.labelMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-            color: const Color(0xFF374151),
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: Color(0xFF047857),
           ),
         ),
         const SizedBox(height: 8),
         TextFormField(
           controller: controller,
-          obscureText: obscureText,
+          obscureText: isPassword && !isPasswordVisible,
           keyboardType: keyboardType,
           validator: validator,
-          onTap: onTap,
-          readOnly: readOnly,
           maxLines: maxLines,
-          minLines: minLines,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: const Color(0xFF1F2937),
+          enabled: enabled,
+          style: const TextStyle(
+            fontSize: 16,
+            color: AppTheme.textPrimary,
           ),
           decoration: InputDecoration(
-            hintText: hint,
-            prefixIcon: prefixIcon != null
-                ? Icon(
-                    prefixIcon,
-                    color: const Color(0xFF6B7280),
-                    size: 20,
+            hintText: hintText,
+            hintStyle: const TextStyle(
+              color: Color(0xFF9CA3AF),
+              fontSize: 16,
+            ),
+            prefixIcon: prefixIcon,
+            suffixIcon: isPassword
+                ? IconButton(
+                    onPressed: onTogglePassword,
+                    icon: Icon(
+                      isPasswordVisible ? Icons.visibility_off : Icons.visibility,
+                      color: const Color(0xFF9CA3AF),
+                    ),
                   )
-                : null,
-            suffixIcon: suffixIcon,
-            contentPadding: contentPadding ??
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                : suffixIcon,
             border: OutlineInputBorder(
-              borderRadius: borderRadius ?? BorderRadius.circular(12),
-              borderSide: const BorderSide(
-                color: Color(0xFFD1D5DB),
-                width: 1,
-              ),
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFFD1FAE5)),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: borderRadius ?? BorderRadius.circular(12),
-              borderSide: const BorderSide(
-                color: Color(0xFFD1D5DB),
-                width: 1,
-              ),
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFFD1FAE5)),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: borderRadius ?? BorderRadius.circular(12),
-              borderSide: const BorderSide(
-                color: Color(0xFF3B82F6),
-                width: 2,
-              ),
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFF059669), width: 2),
             ),
             errorBorder: OutlineInputBorder(
-              borderRadius: borderRadius ?? BorderRadius.circular(12),
-              borderSide: const BorderSide(
-                color: Color(0xFFEF4444),
-                width: 1,
-              ),
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Colors.red, width: 2),
             ),
             focusedErrorBorder: OutlineInputBorder(
-              borderRadius: borderRadius ?? BorderRadius.circular(12),
-              borderSide: const BorderSide(
-                color: Color(0xFFEF4444),
-                width: 2,
-              ),
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Colors.red, width: 2),
             ),
             filled: true,
-            fillColor: Colors.white,
-            hintStyle: theme.textTheme.bodyMedium?.copyWith(
-              color: const Color(0xFF9CA3AF),
-            ),
+            fillColor: enabled ? Colors.white : const Color(0xFFF9FAFB),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           ),
         ),
       ],
