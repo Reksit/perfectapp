@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
-import '../providers/auth_provider.dart';
-import '../providers/toast_provider.dart';
-import '../utils/routes.dart';
-import '../utils/theme.dart';
+import 'package:go_router/go_router.dart';
+import '../providers/auth/auth_provider.dart';
 import '../widgets/common/custom_button.dart';
 import '../widgets/common/custom_text_field.dart';
 
@@ -15,33 +12,15 @@ class LandingPage extends StatefulWidget {
   State<LandingPage> createState() => _LandingPageState();
 }
 
-class _LandingPageState extends State<LandingPage>
-    with TickerProviderStateMixin {
+class _LandingPageState extends State<LandingPage> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isPasswordVisible = false;
   bool _isLoading = false;
 
-  late AnimationController _cardAnimationController;
-  late Animation<double> _cardAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _cardAnimationController = AnimationController(
-      duration: const Duration(seconds: 3),
-      vsync: this,
-    );
-    _cardAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _cardAnimationController, curve: Curves.easeInOut),
-    );
-    _cardAnimationController.repeat(reverse: true);
-  }
-
   @override
   void dispose() {
-    _cardAnimationController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -58,17 +37,43 @@ class _LandingPageState extends State<LandingPage>
       
       if (!mounted) return;
       
-      final toastProvider = context.read<ToastProvider>();
-      toastProvider.showSuccess('Login successful!');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Login successful!'),
+          backgroundColor: Colors.green,
+        ),
+      );
       
       // Navigate based on role
       await Future.delayed(const Duration(milliseconds: 500));
       
-      final route = authProvider.getInitialRoute();
-      Navigator.of(context).pushReplacementNamed(route);
+      final user = authProvider.user;
+      if (user != null) {
+        switch (user.role.toLowerCase()) {
+          case 'student':
+            context.pushReplacement('/student-dashboard');
+            break;
+          case 'professor':
+            context.pushReplacement('/professor-dashboard');
+            break;
+          case 'alumni':
+            context.pushReplacement('/alumni-dashboard');
+            break;
+          case 'management':
+            context.pushReplacement('/management-dashboard');
+            break;
+          default:
+            context.pushReplacement('/student-dashboard');
+        }
+      }
     } catch (error) {
       if (!mounted) return;
-      context.read<ToastProvider>().showError(error.toString());
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString().replaceFirst('Exception: ', '')),
+          backgroundColor: Colors.red,
+        ),
+      );
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -132,174 +137,154 @@ class _LandingPageState extends State<LandingPage>
   }
 
   Widget _buildHeader() {
-    return AnimationLimiter(
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: AnimationConfiguration.toStaggeredList(
-          duration: const Duration(milliseconds: 600),
-          childAnimationBuilder: (widget) => SlideAnimation(
-            horizontalOffset: 50.0,
-            child: FadeInAnimation(child: widget),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        const Text(
+          'EduConnect',
+          style: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF059669),
           ),
-          children: [
-            const Text(
-              'EduConnect',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.primaryGreen,
-              ),
-            ),
-            CustomButton(
-              text: 'Sign Up',
-              onPressed: () => Navigator.pushNamed(context, AppRoutes.register),
-              variant: ButtonVariant.primary,
-            ),
-          ],
         ),
-      ),
+        CustomButton(
+          text: 'Sign Up',
+          onPressed: () => context.push('/register'),
+          variant: ButtonVariant.primary,
+        ),
+      ],
     );
   }
 
   Widget _buildLoginForm() {
-    return AnimationLimiter(
-      child: Column(
-        children: AnimationConfiguration.toStaggeredList(
-          duration: const Duration(milliseconds: 600),
-          childAnimationBuilder: (widget) => SlideAnimation(
-            verticalOffset: 50.0,
-            child: FadeInAnimation(child: widget),
+    return Container(
+      padding: const EdgeInsets.all(32),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
           ),
+        ],
+        border: Border.all(color: const Color(0xFFDCFCE7)),
+      ),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Container(
-              padding: const EdgeInsets.all(32),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 20,
-                    offset: const Offset(0, 10),
+            // Header
+            Column(
+              children: [
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF059669), Color(0xFF10B981)],
+                    ),
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                ],
-                border: Border.all(color: const Color(0xFFDCFCE7)),
-              ),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // Header
-                    Column(
-                      children: [
-                        Container(
-                          width: 64,
-                          height: 64,
-                          decoration: BoxDecoration(
-                            gradient: AppGradients.primaryGradient,
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: const Icon(
-                            Icons.school,
-                            size: 32,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        const Text(
-                          'Welcome Back',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF065F46),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        const Text(
-                          'Sign in to your EduConnect portal',
-                          style: TextStyle(
-                            color: Color(0xFF059669),
-                            fontSize: 16,
-                          ),
-                        ),
-                      ],
-                    ),
-                    
-                    const SizedBox(height: 32),
-                    
-                    // Email Field
-                    CustomTextField(
-                      controller: _emailController,
-                      label: 'Email Address',
-                      hintText: 'Enter your college email',
-                      keyboardType: TextInputType.emailAddress,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Email is required';
-                        }
-                        if (!value.contains('@')) {
-                          return 'Please enter a valid email';
-                        }
-                        return null;
-                      },
-                    ),
-                    
-                    const SizedBox(height: 20),
-                    
-                    // Password Field
-                    CustomTextField(
-                      controller: _passwordController,
-                      label: 'Password',
-                      hintText: 'Enter your password',
-                      isPassword: true,
-                      isPasswordVisible: _isPasswordVisible,
-                      onTogglePassword: () {
-                        setState(() => _isPasswordVisible = !_isPasswordVisible);
-                      },
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Password is required';
-                        }
-                        return null;
-                      },
-                    ),
-                    
-                    const SizedBox(height: 32),
-                    
-                    // Login Button
-                    CustomButton(
-                      text: _isLoading ? 'Signing in...' : 'Sign In',
-                      onPressed: _isLoading ? null : _handleLogin,
-                      variant: ButtonVariant.primary,
-                      isLoading: _isLoading,
-                    ),
-                    
-                    const SizedBox(height: 24),
-                    
-                    // Register Link
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Text(
-                          "Don't have an account? ",
-                          style: TextStyle(color: Color(0xFF059669)),
-                        ),
-                        GestureDetector(
-                          onTap: () => Navigator.pushNamed(context, AppRoutes.register),
-                          child: const Text(
-                            'Sign up',
-                            style: TextStyle(
-                              color: Color(0xFF047857),
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                  child: const Icon(
+                    Icons.school,
+                    size: 32,
+                    color: Colors.white,
+                  ),
                 ),
-              ),
+                const SizedBox(height: 24),
+                const Text(
+                  'Welcome Back',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF065F46),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Sign in to your EduConnect portal',
+                  style: TextStyle(
+                    color: Color(0xFF059669),
+                    fontSize: 16,
+                  ),
+                ),
+              ],
+            ),
+            
+            const SizedBox(height: 32),
+            
+            // Email Field
+            CustomTextField(
+              controller: _emailController,
+              label: 'Email Address',
+              hintText: 'Enter your college email',
+              keyboardType: TextInputType.emailAddress,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Email is required';
+                }
+                if (!value.contains('@')) {
+                  return 'Please enter a valid email';
+                }
+                return null;
+              },
+            ),
+            
+            const SizedBox(height: 20),
+            
+            // Password Field
+            CustomTextField(
+              controller: _passwordController,
+              label: 'Password',
+              hintText: 'Enter your password',
+              isPassword: true,
+              isPasswordVisible: _isPasswordVisible,
+              onTogglePassword: () {
+                setState(() => _isPasswordVisible = !_isPasswordVisible);
+              },
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Password is required';
+                }
+                return null;
+              },
+            ),
+            
+            const SizedBox(height: 32),
+            
+            // Login Button
+            CustomButton(
+              text: _isLoading ? 'Signing in...' : 'Sign In',
+              onPressed: _isLoading ? null : _handleLogin,
+              variant: ButtonVariant.primary,
+              isLoading: _isLoading,
+            ),
+            
+            const SizedBox(height: 24),
+            
+            // Register Link
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text(
+                  "Don't have an account? ",
+                  style: TextStyle(color: Color(0xFF059669)),
+                ),
+                GestureDetector(
+                  onTap: () => context.push('/register'),
+                  child: const Text(
+                    'Sign up',
+                    style: TextStyle(
+                      color: Color(0xFF047857),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -308,80 +293,51 @@ class _LandingPageState extends State<LandingPage>
   }
 
   Widget _buildAnimatedCards() {
-    return AnimationLimiter(
-      child: Column(
-        children: AnimationConfiguration.toStaggeredList(
-          duration: const Duration(milliseconds: 800),
-          childAnimationBuilder: (widget) => SlideAnimation(
-            horizontalOffset: 100.0,
-            child: FadeInAnimation(child: widget),
-          ),
-          children: [
-            SizedBox(
-              height: 400,
-              child: Stack(
-                children: [
-                  AnimatedBuilder(
-                    animation: _cardAnimation,
-                    builder: (context, child) {
-                      return Transform.translate(
-                        offset: Offset(0, _cardAnimation.value * 20),
-                        child: _buildUserTypeCard(
-                          'For Students',
-                          'Access learning resources, connect with peers, and build your professional network',
-                          Icons.school,
-                          AppGradients.primaryGradient,
-                        ),
-                      );
-                    },
-                  ),
-                  AnimatedBuilder(
-                    animation: _cardAnimation,
-                    builder: (context, child) {
-                      return Transform.translate(
-                        offset: Offset(20, -_cardAnimation.value * 15 + 60),
-                        child: _buildUserTypeCard(
-                          'For Professors',
-                          'Manage courses, track student progress, and collaborate with faculty members',
-                          Icons.person,
-                          AppGradients.blueGradient,
-                        ),
-                      );
-                    },
-                  ),
-                  AnimatedBuilder(
-                    animation: _cardAnimation,
-                    builder: (context, child) {
-                      return Transform.translate(
-                        offset: Offset(40, _cardAnimation.value * 10 + 120),
-                        child: _buildUserTypeCard(
-                          'For Alumni',
-                          'Stay connected with your alma mater and mentor the next generation',
-                          Icons.groups,
-                          AppGradients.purpleGradient,
-                        ),
-                      );
-                    },
-                  ),
-                  AnimatedBuilder(
-                    animation: _cardAnimation,
-                    builder: (context, child) {
-                      return Transform.translate(
-                        offset: Offset(60, -_cardAnimation.value * 25 + 180),
-                        child: _buildUserTypeCard(
-                          'For Management',
-                          'Oversee operations, manage resources, and drive institutional growth',
-                          Icons.business,
-                          AppGradients.orangeGradient,
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
+    return SizedBox(
+      height: 400,
+      child: Stack(
+        children: [
+          Positioned(
+            top: 0,
+            left: 0,
+            child: _buildUserTypeCard(
+              'For Students',
+              'Access learning resources, connect with peers, and build your professional network',
+              Icons.school,
+              const LinearGradient(colors: [Color(0xFF059669), Color(0xFF10B981)]),
             ),
-          ],
-        ),
+          ),
+          Positioned(
+            top: 60,
+            left: 20,
+            child: _buildUserTypeCard(
+              'For Professors',
+              'Manage courses, track student progress, and collaborate with faculty members',
+              Icons.person,
+              const LinearGradient(colors: [Color(0xFF2563EB), Color(0xFF3B82F6)]),
+            ),
+          ),
+          Positioned(
+            top: 120,
+            left: 40,
+            child: _buildUserTypeCard(
+              'For Alumni',
+              'Stay connected with your alma mater and mentor the next generation',
+              Icons.groups,
+              const LinearGradient(colors: [Color(0xFF7C3AED), Color(0xFF8B5CF6)]),
+            ),
+          ),
+          Positioned(
+            top: 180,
+            left: 60,
+            child: _buildUserTypeCard(
+              'For Management',
+              'Oversee operations, manage resources, and drive institutional growth',
+              Icons.business,
+              const LinearGradient(colors: [Color(0xFFEA580C), Color(0xFFF97316)]),
+            ),
+          ),
+        ],
       ),
     );
   }

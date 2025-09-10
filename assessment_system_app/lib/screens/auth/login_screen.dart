@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
-import '../../providers/auth_provider.dart';
-import '../../providers/toast_provider.dart';
-import '../../utils/routes.dart';
-import '../../utils/theme.dart';
+import 'package:go_router/go_router.dart';
+import '../../providers/auth/auth_provider.dart';
 import '../../widgets/common/custom_button.dart';
 import '../../widgets/common/custom_text_field.dart';
+import '../../widgets/common/loading_overlay.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -40,17 +38,43 @@ class _LoginScreenState extends State<LoginScreen> {
       
       if (!mounted) return;
       
-      final toastProvider = context.read<ToastProvider>();
-      toastProvider.showSuccess('Login successful!');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Login successful!'),
+          backgroundColor: Colors.green,
+        ),
+      );
       
       // Navigate based on role
       await Future.delayed(const Duration(milliseconds: 500));
       
-      final route = authProvider.getInitialRoute();
-      Navigator.of(context).pushReplacementNamed(route);
+      final user = authProvider.user;
+      if (user != null) {
+        switch (user.role.toLowerCase()) {
+          case 'student':
+            context.pushReplacement('/student-dashboard');
+            break;
+          case 'professor':
+            context.pushReplacement('/professor-dashboard');
+            break;
+          case 'alumni':
+            context.pushReplacement('/alumni-dashboard');
+            break;
+          case 'management':
+            context.pushReplacement('/management-dashboard');
+            break;
+          default:
+            context.pushReplacement('/student-dashboard');
+        }
+      }
     } catch (error) {
       if (!mounted) return;
-      context.read<ToastProvider>().showError(error.toString());
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString().replaceFirst('Exception: ', '')),
+          backgroundColor: Colors.red,
+        ),
+      );
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -61,7 +85,9 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
+      body: LoadingOverlay(
+        isLoading: _isLoading,
+        child: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
@@ -77,16 +103,7 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Center(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
-              child: AnimationLimiter(
-                child: Column(
-                  children: AnimationConfiguration.toStaggeredList(
-                    duration: const Duration(milliseconds: 600),
-                    childAnimationBuilder: (widget) => SlideAnimation(
-                      verticalOffset: 50.0,
-                      child: FadeInAnimation(child: widget),
-                    ),
-                    children: [
-                      Container(
+              child: Container(
                         constraints: const BoxConstraints(maxWidth: 400),
                         padding: const EdgeInsets.all(32),
                         decoration: BoxDecoration(
@@ -113,7 +130,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                     width: 64,
                                     height: 64,
                                     decoration: BoxDecoration(
-                                      gradient: AppGradients.primaryGradient,
+                                      gradient: const LinearGradient(
+                                        colors: [Color(0xFF059669), Color(0xFF10B981)],
+                                      ),
                                       borderRadius: BorderRadius.circular(16),
                                     ),
                                     child: const Icon(
@@ -202,7 +221,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     style: TextStyle(color: Color(0xFF059669)),
                                   ),
                                   GestureDetector(
-                                    onTap: () => Navigator.pushNamed(context, AppRoutes.register),
+                                    onTap: () => context.push('/register'),
                                     child: const Text(
                                       'Sign up',
                                       style: TextStyle(
@@ -217,12 +236,9 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                       ),
-                    ],
-                  ),
-                ),
-              ),
             ),
           ),
+        ),
         ),
       ),
     );

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../providers/auth_provider.dart';
-import '../../providers/toast_provider.dart';
+import '../../providers/auth/auth_provider.dart';
 import '../../utils/theme.dart';
 import '../../widgets/dashboard/dashboard_stats.dart';
 import '../../widgets/features/ai_assessment_widget.dart';
@@ -299,7 +298,9 @@ class _StudentDashboardState extends State<StudentDashboard> {
                       // Notification Bell
                       IconButton(
                         onPressed: () {
-                          context.read<ToastProvider>().showInfo('No new notifications');
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('No new notifications')),
+                          );
                         },
                         icon: const Icon(Icons.notifications_outlined),
                       ),

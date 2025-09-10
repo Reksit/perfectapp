@@ -1,102 +1,63 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
-import '../../providers/auth_provider.dart';
-import '../../providers/toast_provider.dart';
-import '../../services/api_service.dart';
-import '../../utils/routes.dart';
-import '../../utils/theme.dart';
+import 'package:go_router/go_router.dart';
+import '../../providers/auth/auth_provider.dart';
 import '../../widgets/common/custom_button.dart';
+import '../../widgets/common/loading_overlay.dart';
 
-class VerifyOtpScreen extends StatefulWidget {
-  const VerifyOtpScreen({super.key});
+class VerifyOTPScreen extends StatefulWidget {
+  final String email;
+  
+  const VerifyOTPScreen({super.key, required this.email});
 
   @override
-  State<VerifyOtpScreen> createState() => _VerifyOtpScreenState();
+  State<VerifyOTPScreen> createState() => _VerifyOTPScreenState();
 }
 
-class _VerifyOtpScreenState extends State<VerifyOtpScreen>
-    with TickerProviderStateMixin {
+class _VerifyOTPScreenState extends State<VerifyOTPScreen> {
   final _otpController = TextEditingController();
   bool _isLoading = false;
   bool _isResending = false;
-  int _timeLeft = 300; // 5 minutes
-  late String _email;
-  
-  late AnimationController _timerController;
-  late Animation<double> _timerAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _timerController = AnimationController(
-      duration: const Duration(seconds: 300),
-      vsync: this,
-    );
-    _timerAnimation = Tween<double>(begin: 1.0, end: 0.0).animate(_timerController);
-    _timerController.forward();
-    _startTimer();
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-    _email = args?['email'] ?? '';
-    
-    if (_email.isEmpty) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        Navigator.pushReplacementNamed(context, AppRoutes.register);
-      });
-    }
-  }
 
   @override
   void dispose() {
-    _timerController.dispose();
     _otpController.dispose();
     super.dispose();
   }
 
-  void _startTimer() {
-    Future.doWhile(() async {
-      await Future.delayed(const Duration(seconds: 1));
-      if (mounted) {
-        setState(() {
-          if (_timeLeft > 0) {
-            _timeLeft--;
-          }
-        });
-        return _timeLeft > 0;
-      }
-      return false;
-    });
-  }
-
-  String _formatTime(int seconds) {
-    final mins = seconds ~/ 60;
-    final secs = seconds % 60;
-    return '${mins.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}';
-  }
-
   Future<void> _handleVerifyOtp() async {
-    if (_otpController.text.length != 4) {
-      context.read<ToastProvider>().showError('Please enter a valid 4-digit OTP');
+    if (_otpController.text.length != 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a valid 6-digit OTP'),
+          backgroundColor: Colors.red,
+        ),
+      );
       return;
     }
 
     setState(() => _isLoading = true);
 
     try {
-      await ApiService.verifyOTP(_email, _otpController.text);
+      await context.read<AuthProvider>().verifyOTP(widget.email, _otpController.text);
       
       if (!mounted) return;
       
-      context.read<ToastProvider>().showSuccess('Email verified successfully!');
-      Navigator.pushReplacementNamed(context, AppRoutes.login);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Email verified successfully!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      context.pushReplacement('/login');
     } catch (error) {
       if (!mounted) return;
-      context.read<ToastProvider>().showError(error.toString());
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString().replaceFirst('Exception: ', '')),
+          backgroundColor: Colors.red,
+        ),
+      );
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -108,20 +69,24 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen>
     setState(() => _isResending = true);
 
     try {
-      await ApiService.resendOTP(_email);
+      await context.read<AuthProvider>().resendOTP(widget.email);
       
       if (!mounted) return;
       
-      context.read<ToastProvider>().showSuccess('OTP sent successfully!');
-      setState(() {
-        _timeLeft = 300;
-        _timerController.reset();
-        _timerController.forward();
-      });
-      _startTimer();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('OTP sent successfully!'),
+          backgroundColor: Colors.green,
+        ),
+      );
     } catch (error) {
       if (!mounted) return;
-      context.read<ToastProvider>().showError(error.toString());
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString().replaceFirst('Exception: ', '')),
+          backgroundColor: Colors.red,
+        ),
+      );
     } finally {
       if (mounted) {
         setState(() => _isResending = false);
@@ -132,7 +97,9 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
+      body: LoadingOverlay(
+        isLoading: _isLoading,
+        child: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
@@ -148,16 +115,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen>
           child: Center(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
-              child: AnimationLimiter(
-                child: Column(
-                  children: AnimationConfiguration.toStaggeredList(
-                    duration: const Duration(milliseconds: 600),
-                    childAnimationBuilder: (widget) => SlideAnimation(
-                      verticalOffset: 50.0,
-                      child: FadeInAnimation(child: widget),
-                    ),
-                    children: [
-                      Container(
+              child: Container(
                         constraints: const BoxConstraints(maxWidth: 400),
                         padding: const EdgeInsets.all(32),
                         decoration: BoxDecoration(
@@ -182,7 +140,9 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen>
                                   width: 64,
                                   height: 64,
                                   decoration: BoxDecoration(
-                                    gradient: AppGradients.primaryGradient,
+                                    gradient: const LinearGradient(
+                                      colors: [Color(0xFF059669), Color(0xFF10B981)],
+                                    ),
                                     borderRadius: BorderRadius.circular(16),
                                   ),
                                   child: const Icon(
@@ -203,6 +163,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen>
                                 const SizedBox(height: 8),
                                 const Text(
                                   "We've sent a 4-digit code to",
+                                  "We've sent a 6-digit code to",
                                   style: TextStyle(
                                     color: Color(0xFF6B7280),
                                     fontSize: 16,
@@ -210,7 +171,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen>
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  _email,
+                                  widget.email,
                                   style: const TextStyle(
                                     color: Color(0xFF059669),
                                     fontSize: 16,
@@ -238,7 +199,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen>
                                 TextFormField(
                                   controller: _otpController,
                                   keyboardType: TextInputType.number,
-                                  maxLength: 4,
+                                  maxLength: 6,
                                   textAlign: TextAlign.center,
                                   style: const TextStyle(
                                     fontSize: 24,
@@ -246,7 +207,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen>
                                     letterSpacing: 8,
                                   ),
                                   decoration: InputDecoration(
-                                    hintText: '0000',
+                                    hintText: '000000',
                                     counterText: '',
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
@@ -262,7 +223,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen>
                                     ),
                                   ),
                                   onChanged: (value) {
-                                    if (value.length == 4) {
+                                    if (value.length == 6) {
                                       FocusScope.of(context).unfocus();
                                     }
                                   },
@@ -272,45 +233,22 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen>
                             
                             const SizedBox(height: 24),
                             
-                            // Timer or Resend
+                            // Resend Button
                             Center(
-                              child: _timeLeft > 0
-                                  ? Column(
-                                      children: [
-                                        Text(
-                                          'Time remaining: ${_formatTime(_timeLeft)}',
-                                          style: const TextStyle(
-                                            color: Color(0xFF6B7280),
-                                            fontSize: 14,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 8),
-                                        AnimatedBuilder(
-                                          animation: _timerAnimation,
-                                          builder: (context, child) {
-                                            return LinearProgressIndicator(
-                                              value: _timerAnimation.value,
-                                              backgroundColor: const Color(0xFFD1FAE5),
-                                              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF059669)),
-                                            );
-                                          },
-                                        ),
-                                      ],
-                                    )
-                                  : TextButton.icon(
-                                      onPressed: _isResending ? null : _handleResendOtp,
-                                      icon: _isResending
-                                          ? const SizedBox(
-                                              width: 16,
-                                              height: 16,
-                                              child: CircularProgressIndicator(strokeWidth: 2),
-                                            )
-                                          : const Icon(Icons.refresh),
-                                      label: Text(_isResending ? 'Resending...' : 'Resend OTP'),
-                                      style: TextButton.styleFrom(
-                                        foregroundColor: const Color(0xFF059669),
-                                      ),
-                                    ),
+                              child: TextButton.icon(
+                                onPressed: _isResending ? null : _handleResendOtp,
+                                icon: _isResending
+                                    ? const SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(strokeWidth: 2),
+                                      )
+                                    : const Icon(Icons.refresh),
+                                label: Text(_isResending ? 'Resending...' : 'Resend OTP'),
+                                style: TextButton.styleFrom(
+                                  foregroundColor: const Color(0xFF059669),
+                                ),
+                              ),
                             ),
                             
                             const SizedBox(height: 32),
@@ -318,19 +256,16 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen>
                             // Verify Button
                             CustomButton(
                               text: _isLoading ? 'Verifying...' : 'Verify Email',
-                              onPressed: (_isLoading || _otpController.text.length != 4) ? null : _handleVerifyOtp,
+                              onPressed: (_isLoading || _otpController.text.length != 6) ? null : _handleVerifyOtp,
                               variant: ButtonVariant.primary,
                               isLoading: _isLoading,
                             ),
                           ],
                         ),
                       ),
-                    ],
-                  ),
-                ),
-              ),
             ),
           ),
+        ),
         ),
       ),
     );

@@ -1,18 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../providers/auth_provider.dart';
-import '../../providers/toast_provider.dart';
+import '../../providers/auth/auth_provider.dart';
 import '../../utils/theme.dart';
 import '../../widgets/features/my_assessments_widget.dart';
 import '../../widgets/features/create_assessment_widget.dart';
 import '../../widgets/features/attendance_management_widget.dart';
-import '../../../../lib/widgets/features/assessment_insights_widget.dart';
-import '../../../../lib/widgets/features/student_heatmap_widget.dart';
+import '../../widgets/features/assessment_insights_widget.dart';
+import '../../widgets/features/student_heatmap_widget.dart';
 import '../../widgets/features/events_widget.dart';
 import '../../widgets/features/chat_widget.dart';
-import '../../../../lib/widgets/features/issue_circular_widget.dart';
+import '../../widgets/features/issue_circular_widget.dart';
 import '../../widgets/features/circulars_widget.dart';
-import '../../../../lib/widgets/features/sent_circulars_widget.dart';
+import '../../widgets/features/sent_circulars_widget.dart';
 import '../../widgets/features/password_change_widget.dart';
 
 class ProfessorDashboard extends StatefulWidget {
@@ -294,7 +293,9 @@ class _ProfessorDashboardState extends State<ProfessorDashboard> {
                       // Notification Bell
                       IconButton(
                         onPressed: () {
-                          context.read<ToastProvider>().showInfo('No new notifications');
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('No new notifications')),
+                          );
                         },
                         icon: const Icon(Icons.notifications_outlined),
                       ),

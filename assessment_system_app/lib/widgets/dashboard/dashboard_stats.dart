@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../providers/auth_provider.dart';
-import '../../providers/toast_provider.dart';
+import '../../providers/auth/auth_provider.dart';
 import '../../services/api_service.dart';
 import '../../utils/theme.dart';
 import '../common/loading_widget.dart';
@@ -53,7 +52,12 @@ class _DashboardStatsState extends State<DashboardStats> {
     } catch (error) {
       setState(() => _loading = false);
       if (!mounted) return;
-      context.read<ToastProvider>().showError('Failed to load dashboard stats');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to load dashboard stats'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -459,6 +463,8 @@ class _DashboardStatsState extends State<DashboardStats> {
 
   void _navigateToTab(String tabId) {
     // This would be handled by the parent dashboard to switch tabs
-    context.read<ToastProvider>().showInfo('Navigating to $tabId');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Navigating to $tabId')),
+    );
   }
 }

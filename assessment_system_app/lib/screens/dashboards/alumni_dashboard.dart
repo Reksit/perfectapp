@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../providers/auth_provider.dart';
-import '../../providers/toast_provider.dart';
+import '../../providers/auth/auth_provider.dart';
 import '../../utils/theme.dart';
 import '../../widgets/features/alumni_profile_widget.dart';
 import '../../widgets/features/alumni_directory_widget.dart';

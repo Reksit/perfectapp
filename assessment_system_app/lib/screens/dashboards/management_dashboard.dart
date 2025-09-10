@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../providers/auth_provider.dart';
+import '../../providers/auth/auth_provider.dart';
 import '../../utils/theme.dart';
-import '../../../../lib/widgets/features/dashboard_stats_widget.dart';
-import '../../../../lib/widgets/features/alumni_verification_widget.dart';
-import '../../../../lib/widgets/features/event_management_widget.dart';
-import '../../../../lib/widgets/features/student_heatmap_widget.dart';
-import '../../../../lib/widgets/features/alumni_event_invitation_widget.dart';
-import '../../../../lib/widgets/features/management_event_request_tracker_widget.dart';
-import '../../../../lib/widgets/features/ai_student_analysis_widget.dart';
+import '../../widgets/features/dashboard_stats_widget.dart';
+import '../../widgets/features/alumni_verification_widget.dart';
+import '../../widgets/features/event_management_widget.dart';
+import '../../widgets/features/student_heatmap_widget.dart';
+import '../../widgets/features/alumni_event_invitation_widget.dart';
+import '../../widgets/features/management_event_request_tracker_widget.dart';
+import '../../widgets/features/ai_student_analysis_widget.dart';
 import '../../widgets/features/password_change_widget.dart';
 
 class ManagementDashboard extends StatefulWidget {
